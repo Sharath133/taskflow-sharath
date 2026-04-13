@@ -83,13 +83,10 @@ func createTestUser(t *testing.T, name, email, password string) testUser {
 	w := makeRequest(t, httpMethodPost, "/auth/register", toJSONBody(t, body), "")
 
 	payload := assertJSON(t, w, httpStatusCreated)
-	data, ok := payload["data"].(map[string]any)
-	require.True(t, ok, "expected data object")
-
-	token, _ := data["token"].(string)
+	token, _ := payload["token"].(string)
 	require.NotEmpty(t, token)
 
-	userObj, ok := data["user"].(map[string]any)
+	userObj, ok := payload["user"].(map[string]any)
 	require.True(t, ok, "expected user object")
 	idStr, _ := userObj["id"].(string)
 	uid, err := uuid.Parse(idStr)
@@ -113,11 +110,29 @@ func getAuthToken(t *testing.T, email, password string) string {
 	}
 	w := makeRequest(t, httpMethodPost, "/auth/login", toJSONBody(t, body), "")
 	payload := assertJSON(t, w, httpStatusOK)
-	data, ok := payload["data"].(map[string]any)
-	require.True(t, ok)
-	token, _ := data["token"].(string)
+	token, _ := payload["token"].(string)
 	require.NotEmpty(t, token)
 	return token
+}
+
+// projectsSlice returns the `projects` array from a GET /projects response.
+func projectsSlice(t *testing.T, payload map[string]any) []any {
+	t.Helper()
+	raw, ok := payload["projects"]
+	require.True(t, ok, "missing projects key: %#v", payload)
+	s, ok := raw.([]any)
+	require.True(t, ok, "projects should be array, got %T", raw)
+	return s
+}
+
+// tasksSlice returns the `tasks` array from a GET /projects/:id/tasks response.
+func tasksSlice(t *testing.T, payload map[string]any) []any {
+	t.Helper()
+	raw, ok := payload["tasks"]
+	require.True(t, ok, "missing tasks key: %#v", payload)
+	s, ok := raw.([]any)
+	require.True(t, ok, "tasks should be array, got %T", raw)
+	return s
 }
 
 const (

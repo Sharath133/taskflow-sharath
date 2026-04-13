@@ -6,22 +6,22 @@ This document describes how the backend is structured, how errors become HTTP re
 
 | Layer | Package(s) | Responsibility |
 |--------|------------|------------------|
-| **HTTP** | `internal/handlers`, `internal/router`, `internal/middleware` | Routing, JSON, binding, status codes, auth middleware |
-| **Application** | `internal/service` | Access rules, validation orchestration, use-case flow |
-| **Persistence** | `internal/repository` | SQL via `sqlx`; map rows to `internal/domain` types |
-| **Domain** | `internal/domain` | Shared models and sentinel errors (no SQL, no Gin) |
-| **Infrastructure** | `internal/config`, `internal/auth`, `pkg/database`, `internal/observability` | Config, JWT/password helpers, DB connection, request correlation |
+| **HTTP** | `backend/internal/handlers`, `backend/internal/router`, `backend/internal/middleware` | Routing, JSON, binding, status codes, auth middleware |
+| **Application** | `backend/internal/service` | Access rules, validation orchestration, use-case flow |
+| **Persistence** | `backend/internal/repository` | SQL via `sqlx`; map rows to `backend/internal/domain` types |
+| **Domain** | `backend/internal/domain` | Shared models and sentinel errors (no SQL, no Gin) |
+| **Infrastructure** | `backend/internal/config`, `backend/internal/auth`, `backend/pkg/database`, `backend/internal/observability` | Config, JWT/password helpers, DB connection, request correlation |
 
 **Allowed dependencies (who may call whom):**
 
 - Handlers call **only** services (and handler helpers). They do not import repositories.
 - Services call **repositories** and **domain**; they do not import Gin or write HTTP responses.
 - Repositories call **domain** and the database; they do not implement business rules (ownership, “can this user see this project?”).
-- Middleware sits on the HTTP edge; it may use `internal/observability` for request-scoped context.
+- Middleware sits on the HTTP edge; it may use `backend/internal/observability` for request-scoped context.
 
 ## Errors → HTTP
 
-Services return `error` values built from `internal/domain`:
+Services return `error` values built from `backend/internal/domain`:
 
 | Error / type | Typical HTTP | Response shape |
 |----------------|-------------|----------------|
@@ -55,7 +55,7 @@ Helper: `repository.WithTx(ctx, db, fn)` builds transactional `Repositories` and
 
 ## Observability
 
-- **`X-Request-ID`**: Accepted from the client when present; otherwise generated (UUID). Echoed on the response and attached to the request `context` (`internal/observability`) for downstream use.
+- **`X-Request-ID`**: Accepted from the client when present; otherwise generated (UUID). Echoed on the response and attached to the request `context` (`backend/internal/observability`) for downstream use.
 - **Access logs**: Structured JSON via `log/slog` with `request_id`, `method`, `path`, `status`, `duration_ms`, `client_ip`, `user_agent` (truncated), and optional Gin error string.
 - **Panics**: Recovery middleware logs `request_id`, stack trace, and returns a generic JSON 500.
 

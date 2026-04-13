@@ -1,5 +1,5 @@
 # =============================================================================
-# TaskFlow — common Docker / Go workflows
+# TaskFlow — run from repo root (Docker Compose + backend Go module)
 # =============================================================================
 # Requires: Docker, Docker Compose v2, and (for local targets) Go 1.21+.
 # Copy `.env.example` to `.env` before using Compose-backed targets.
@@ -18,7 +18,7 @@ endif
 
 ## build: Build the API Docker image (same Dockerfile as compose `api` service)
 build:
-	docker build -t $(IMAGE) -f Dockerfile .
+	docker build -t $(IMAGE) -f backend/Dockerfile backend
 
 ## up: Start Postgres, run migrations once, then start the API
 up:
@@ -42,8 +42,8 @@ migrate-down:
 
 ## seed: Load seed rows from migration 000002 (fails if data already exists)
 seed:
-	$(COMPOSE) exec -T $(SERVICE_DB) psql -U "$(POSTGRES_USER)" -d "$(POSTGRES_DB)" < migrations/000002_seed_data.up.sql
+	$(COMPOSE) exec -T $(SERVICE_DB) psql -U "$(POSTGRES_USER)" -d "$(POSTGRES_DB)" < backend/migrations/000002_seed_data.up.sql
 
 ## test: Run Go unit tests (host toolchain; does not require Docker)
 test:
-	go test ./... -count=1
+	cd backend && go test ./... -count=1

@@ -30,13 +30,9 @@ There is **no** `/api/v1` prefix in the current server build.
 
 ## Conventions
 
-- **Success payloads** for most endpoints are wrapped as:
+- **Success payloads** match the take-home Appendix A shape: **no `data` envelope** — e.g. `{ "token", "user" }` for auth, `{ "projects": [...] }` for `GET /projects`, `{ "tasks": [...] }` for task lists, and a bare project or task object for create/update.
 
-  ```json
-  { "data": <payload> }
-  ```
-
-- **Exceptions:** `GET /health` returns a plain object (no `data` wrapper). `DELETE` endpoints that succeed return **204 No Content** with an empty body.
+- **Exceptions:** Successful `DELETE` returns **204 No Content** with an empty body (no JSON).
 
 - **Dates and times** in JSON use RFC 3339 / ISO-8601 (e.g. `"2026-04-12T10:30:00Z"`).
 
@@ -46,7 +42,7 @@ There is **no** `/api/v1` prefix in the current server build.
 
 ## Authentication
 
-TaskFlow uses **JWT access tokens** signed with **HS256**. After `POST /auth/register` or `POST /auth/login`, the response body includes `data.token`.
+TaskFlow uses **JWT access tokens** signed with **HS256**. After `POST /auth/register` or `POST /auth/login`, the response body includes `token` at the top level.
 
 ### Using the token
 
@@ -220,14 +216,12 @@ Create a new user and return a JWT plus user profile. **No authentication.**
 
 ```json
 {
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "name": "Ada Lovelace",
-      "email": "ada@example.com",
-      "created_at": "2026-04-12T12:00:00Z"
-    }
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Ada Lovelace",
+    "email": "ada@example.com",
+    "created_at": "2026-04-12T12:00:00Z"
   }
 }
 ```
@@ -289,14 +283,12 @@ Exchange email and password for a JWT. **No authentication.**
 
 ```json
 {
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "10000000-0000-4000-8000-000000000001",
-      "name": "Test User",
-      "email": "test@example.com",
-      "created_at": "2026-04-12T10:00:00Z"
-    }
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "10000000-0000-4000-8000-000000000001",
+    "name": "Test User",
+    "email": "test@example.com",
+    "created_at": "2026-04-12T10:00:00Z"
   }
 }
 ```
@@ -321,11 +313,11 @@ Authorization: Bearer <token>
 
 ### `GET /projects`
 
-List projects the current user can access.
+List projects the current user can access (owns the project, or has at least one task in it as **assignee** or **creator** via `created_by`).
 
 | | |
 |--|--|
-| **Description** | Returns all accessible projects, or a paginated envelope when `page` and/or `limit` are present. |
+| **Description** | Returns `{ "projects": [...] }`, or adds `total`, `page`, and `limit` when `page` and/or `limit` are present. |
 | **Request headers** | `Authorization` |
 | **Query parameters** | Optional: `page` (≥ 1), `limit` (≥ 1, capped at 100 server-side when paginating). |
 
@@ -340,11 +332,9 @@ List projects the current user can access.
 
 **Response body (200) — without pagination**
 
-`data` is a **JSON array** of project objects.
-
 ```json
 {
-  "data": [
+  "projects": [
     {
       "id": "20000000-0000-4000-8000-000000000001",
       "name": "Demo Project",
@@ -360,20 +350,18 @@ List projects the current user can access.
 
 ```json
 {
-  "data": {
-    "items": [
-      {
-        "id": "20000000-0000-4000-8000-000000000001",
-        "name": "Demo Project",
-        "description": "Seed project owned by test@example.com",
-        "owner_id": "10000000-0000-4000-8000-000000000001",
-        "created_at": "2026-04-12T10:00:00Z"
-      }
-    ],
-    "total": 1,
-    "page": 1,
-    "limit": 20
-  }
+  "projects": [
+    {
+      "id": "20000000-0000-4000-8000-000000000001",
+      "name": "Demo Project",
+      "description": "Seed project owned by test@example.com",
+      "owner_id": "10000000-0000-4000-8000-000000000001",
+      "created_at": "2026-04-12T10:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
 }
 ```
 
@@ -422,13 +410,11 @@ Create a project; the authenticated user becomes the owner.
 
 ```json
 {
-  "data": {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "name": "My project",
-    "description": "Optional longer text",
-    "owner_id": "10000000-0000-4000-8000-000000000001",
-    "created_at": "2026-04-12T12:00:00Z"
-  }
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "name": "My project",
+  "description": "Optional longer text",
+  "owner_id": "10000000-0000-4000-8000-000000000001",
+  "created_at": "2026-04-12T12:00:00Z"
 }
 ```
 
@@ -457,29 +443,27 @@ Return one project with **all** tasks in that project and `task_count`.
 
 ```json
 {
-  "data": {
-    "id": "20000000-0000-4000-8000-000000000001",
-    "name": "Demo Project",
-    "description": "Seed project owned by test@example.com",
-    "owner_id": "10000000-0000-4000-8000-000000000001",
-    "created_at": "2026-04-12T10:00:00Z",
-    "task_count": 3,
-    "tasks": [
-      {
-        "id": "30000000-0000-4000-8000-000000000001",
-        "title": "Backlog item",
-        "description": "Task in todo state",
-        "status": "todo",
-        "priority": "low",
-        "project_id": "20000000-0000-4000-8000-000000000001",
-        "assignee_id": "10000000-0000-4000-8000-000000000001",
-        "created_by": null,
-        "due_date": null,
-        "created_at": "2026-04-12T10:00:00Z",
-        "updated_at": "2026-04-12T10:00:00Z"
-      }
-    ]
-  }
+  "id": "20000000-0000-4000-8000-000000000001",
+  "name": "Demo Project",
+  "description": "Seed project owned by test@example.com",
+  "owner_id": "10000000-0000-4000-8000-000000000001",
+  "created_at": "2026-04-12T10:00:00Z",
+  "task_count": 3,
+  "tasks": [
+    {
+      "id": "30000000-0000-4000-8000-000000000001",
+      "title": "Backlog item",
+      "description": "Task in todo state",
+      "status": "todo",
+      "priority": "low",
+      "project_id": "20000000-0000-4000-8000-000000000001",
+      "assignee_id": "10000000-0000-4000-8000-000000000001",
+      "created_by": null,
+      "due_date": null,
+      "created_at": "2026-04-12T10:00:00Z",
+      "updated_at": "2026-04-12T10:00:00Z"
+    }
+  ]
 }
 ```
 
@@ -511,16 +495,14 @@ Aggregated task counts by `status` and by assignee user id. Unassigned tasks are
 
 ```json
 {
-  "data": {
-    "by_status": {
-      "todo": 1,
-      "in_progress": 1,
-      "done": 1
-    },
-    "by_assignee": {
-      "10000000-0000-4000-8000-000000000001": 2,
-      "__unassigned__": 1
-    }
+  "by_status": {
+    "todo": 1,
+    "in_progress": 1,
+    "done": 1
+  },
+  "by_assignee": {
+    "10000000-0000-4000-8000-000000000001": 2,
+    "__unassigned__": 1
   }
 }
 ```
@@ -555,13 +537,11 @@ Partial update. **Owner only.**
 
 ```json
 {
-  "data": {
-    "id": "20000000-0000-4000-8000-000000000001",
-    "name": "Renamed project",
-    "description": "Updated description",
-    "owner_id": "10000000-0000-4000-8000-000000000001",
-    "created_at": "2026-04-12T10:00:00Z"
-  }
+  "id": "20000000-0000-4000-8000-000000000001",
+  "name": "Renamed project",
+  "description": "Updated description",
+  "owner_id": "10000000-0000-4000-8000-000000000001",
+  "created_at": "2026-04-12T10:00:00Z"
 }
 ```
 
@@ -604,7 +584,7 @@ List tasks for a project.
 |---------------------|----------|
 | `status` | `todo`, `in_progress`, or `done` |
 | `assignee` | User UUID |
-| `page`, `limit` | Positive integers; if either is present, response uses paginated shape (same pattern as project list). |
+| `page`, `limit` | Positive integers; if either is present, response adds `total`, `page`, and `limit` alongside `tasks`. |
 
 **Response codes**
 
@@ -620,7 +600,7 @@ List tasks for a project.
 
 ```json
 {
-  "data": [
+  "tasks": [
     {
       "id": "30000000-0000-4000-8000-000000000001",
       "title": "Backlog item",
@@ -635,6 +615,30 @@ List tasks for a project.
       "updated_at": "2026-04-12T10:00:00Z"
     }
   ]
+}
+```
+
+**Response body (200) — with pagination** (`?page=1&limit=20`)
+
+```json
+{
+  "tasks": [
+    {
+      "id": "30000000-0000-4000-8000-000000000001",
+      "title": "Backlog item",
+      "status": "todo",
+      "priority": "low",
+      "project_id": "20000000-0000-4000-8000-000000000001",
+      "assignee_id": "10000000-0000-4000-8000-000000000001",
+      "created_by": null,
+      "due_date": null,
+      "created_at": "2026-04-12T10:00:00Z",
+      "updated_at": "2026-04-12T10:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
 }
 ```
 
@@ -691,19 +695,17 @@ Create a task. The path `:id` is the project id; the server **overrides** any `p
 
 ```json
 {
-  "data": {
-    "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-    "title": "Implement API docs",
-    "description": "Optional",
-    "status": "todo",
-    "priority": "high",
-    "project_id": "20000000-0000-4000-8000-000000000001",
-    "assignee_id": "10000000-0000-4000-8000-000000000001",
-    "created_by": "10000000-0000-4000-8000-000000000001",
-    "due_date": "2026-04-15T00:00:00Z",
-    "created_at": "2026-04-12T12:30:00Z",
-    "updated_at": "2026-04-12T12:30:00Z"
-  }
+  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "title": "Implement API docs",
+  "description": "Optional",
+  "status": "todo",
+  "priority": "high",
+  "project_id": "20000000-0000-4000-8000-000000000001",
+  "assignee_id": "10000000-0000-4000-8000-000000000001",
+  "created_by": "10000000-0000-4000-8000-000000000001",
+  "due_date": "2026-04-15T00:00:00Z",
+  "created_at": "2026-04-12T12:30:00Z",
+  "updated_at": "2026-04-12T12:30:00Z"
 }
 ```
 

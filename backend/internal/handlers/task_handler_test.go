@@ -44,7 +44,7 @@ func (s *stubTaskService) ListByProject(ctx context.Context, userID, projectID u
 	return nil, errors.New("list not stubbed")
 }
 
-// TestListByProject_PaginatedResponse verifies ?page=&limit= yields items/total/page/limit under data.
+// TestListByProject_PaginatedResponse verifies ?page=&limit= yields tasks/total/page/limit at the top level.
 func TestListByProject_PaginatedResponse(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	pid := uuid.MustParse("20000000-0000-4000-8000-000000000001")
@@ -87,22 +87,20 @@ func TestListByProject_PaginatedResponse(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", w.Code, w.Body.String())
 	}
-	var outer struct {
-		Data struct {
-			Items []domain.Task `json:"items"`
-			Total int64         `json:"total"`
-			Page  int           `json:"page"`
-			Limit int           `json:"limit"`
-		} `json:"data"`
+	var body struct {
+		Tasks []domain.Task `json:"tasks"`
+		Total int64         `json:"total"`
+		Page  int           `json:"page"`
+		Limit int           `json:"limit"`
 	}
-	if err := json.Unmarshal(w.Body.Bytes(), &outer); err != nil {
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 		t.Fatal(err)
 	}
-	if outer.Data.Total != 42 || outer.Data.Page != 1 || outer.Data.Limit != 10 {
-		t.Fatalf("unexpected pagination meta: %+v", outer.Data)
+	if body.Total != 42 || body.Page != 1 || body.Limit != 10 {
+		t.Fatalf("unexpected pagination meta: %+v", body)
 	}
-	if len(outer.Data.Items) != 1 || outer.Data.Items[0].Title != "T1" {
-		t.Fatalf("unexpected items: %+v", outer.Data.Items)
+	if len(body.Tasks) != 1 || body.Tasks[0].Title != "T1" {
+		t.Fatalf("unexpected tasks: %+v", body.Tasks)
 	}
 }
 

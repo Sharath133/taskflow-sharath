@@ -25,12 +25,11 @@ func TestCreateTask_Success(t *testing.T) {
 	}
 	w := makeRequest(t, httpMethodPost, "/projects/"+pid+"/tasks", toJSONBody(t, body), owner.Token)
 	payload := assertJSON(t, w, httpStatusCreated)
-	data := dataMap(t, payload)
 
-	require.Equal(t, "Write integration tests", data["title"])
-	require.Equal(t, "todo", data["status"])
-	require.Equal(t, "high", data["priority"])
-	require.Equal(t, pid, data["project_id"])
+	require.Equal(t, "Write integration tests", payload["title"])
+	require.Equal(t, "todo", payload["status"])
+	require.Equal(t, "high", payload["priority"])
+	require.Equal(t, pid, payload["project_id"])
 }
 
 func TestCreateTask_InvalidStatus(t *testing.T) {
@@ -66,13 +65,12 @@ func TestUpdateTask_Status(t *testing.T) {
 	createBody := map[string]any{"title": "Mutable task", "priority": "low"}
 	wc := makeRequest(t, httpMethodPost, "/projects/"+pid+"/tasks", toJSONBody(t, createBody), owner.Token)
 	created := assertJSON(t, wc, httpStatusCreated)
-	tid := asString(t, dataMap(t, created)["id"])
+	tid := asString(t, created["id"])
 
 	patch := map[string]any{"status": "done"}
 	w := makeRequest(t, httpMethodPatch, "/tasks/"+tid, toJSONBody(t, patch), owner.Token)
 	payload := assertJSON(t, w, httpStatusOK)
-	data := dataMap(t, payload)
-	require.Equal(t, "done", data["status"])
+	require.Equal(t, "done", payload["status"])
 }
 
 func TestFilterTasks_ByStatus(t *testing.T) {
@@ -89,7 +87,7 @@ func TestFilterTasks_ByStatus(t *testing.T) {
 	q.Set("status", "todo")
 	w := makeRequest(t, httpMethodGet, "/projects/"+pid+"/tasks?"+q.Encode(), nil, owner.Token)
 	payload := assertJSON(t, w, httpStatusOK)
-	items := dataSlice(t, payload)
+	items := tasksSlice(t, payload)
 	require.Len(t, items, 1)
 	m := items[0].(map[string]any)
 	require.Equal(t, "A", m["title"])
@@ -119,7 +117,7 @@ func TestFilterTasks_ByAssignee(t *testing.T) {
 	q.Set("assignee", member.ID.String())
 	w := makeRequest(t, httpMethodGet, "/projects/"+pid+"/tasks?"+q.Encode(), nil, owner.Token)
 	payload := assertJSON(t, w, httpStatusOK)
-	items := dataSlice(t, payload)
+	items := tasksSlice(t, payload)
 	require.Len(t, items, 1)
 	m := items[0].(map[string]any)
 	require.Equal(t, "For member", m["title"])
@@ -135,7 +133,7 @@ func TestDeleteTask_AsProjectOwner(t *testing.T) {
 	createBody := map[string]any{"title": "Deletable", "priority": "low"}
 	wc := makeRequest(t, httpMethodPost, "/projects/"+pid+"/tasks", toJSONBody(t, createBody), owner.Token)
 	created := assertJSON(t, wc, httpStatusCreated)
-	tid := asString(t, dataMap(t, created)["id"])
+	tid := asString(t, created["id"])
 
 	wd := makeRequest(t, httpMethodDelete, "/tasks/"+tid, nil, owner.Token)
 	require.Equal(t, httpStatusNoContent, wd.Code)
@@ -161,7 +159,7 @@ func TestDeleteTask_AsNonOwner(t *testing.T) {
 	}
 	wc := makeRequest(t, httpMethodPost, "/projects/"+pid+"/tasks", toJSONBody(t, createBody), owner.Token)
 	created := assertJSON(t, wc, httpStatusCreated)
-	tid := asString(t, dataMap(t, created)["id"])
+	tid := asString(t, created["id"])
 
 	wd := makeRequest(t, httpMethodDelete, "/tasks/"+tid, nil, member.Token)
 	payload := assertErrorPayload(t, wd, httpStatusForbidden)
@@ -178,7 +176,7 @@ func createProjectID(t *testing.T, token, name string) string {
 	reqBody := map[string]any{"name": name}
 	w := makeRequest(t, httpMethodPost, "/projects", toJSONBody(t, reqBody), token)
 	payload := assertJSON(t, w, httpStatusCreated)
-	return asString(t, dataMap(t, payload)["id"])
+	return asString(t, payload["id"])
 }
 
 func mustCreateTask(t *testing.T, token, projectID, title, status string) {

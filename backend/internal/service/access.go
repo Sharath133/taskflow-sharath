@@ -22,7 +22,7 @@ func loadProject(ctx context.Context, projects repository.ProjectRepository, pro
 	return p, nil
 }
 
-// assertProjectAccessible allows owners and users assigned to at least one task in the project.
+// assertProjectAccessible allows owners and users who are assignee or creator on at least one task in the project.
 func assertProjectAccessible(
 	ctx context.Context,
 	projects repository.ProjectRepository,

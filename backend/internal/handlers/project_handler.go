@@ -47,15 +47,15 @@ func (h *ProjectHandler) List(c *gin.Context) {
 	}
 
 	if out.Paginated {
-		successResponse(c, http.StatusOK, gin.H{
-			"items": out.Items,
-			"total": out.Total,
-			"page":  out.Page,
-			"limit": out.Limit,
+		writeJSON(c, http.StatusOK, gin.H{
+			"projects": out.Items,
+			"total":    out.Total,
+			"page":     out.Page,
+			"limit":    out.Limit,
 		})
 		return
 	}
-	successResponse(c, http.StatusOK, out.Items)
+	writeJSON(c, http.StatusOK, gin.H{"projects": out.Items})
 }
 
 // Create handles POST /projects.
@@ -78,7 +78,7 @@ func (h *ProjectHandler) Create(c *gin.Context) {
 		return
 	}
 
-	successResponse(c, http.StatusCreated, p)
+	writeJSON(c, http.StatusCreated, p)
 }
 
 // Get handles GET /projects/:id (project with tasks).
@@ -114,7 +114,7 @@ func (h *ProjectHandler) Get(c *gin.Context) {
 		return
 	}
 
-	successResponse(c, http.StatusOK, domain.ProjectWithTasks{
+	writeJSON(c, http.StatusOK, domain.ProjectWithTasks{
 		Project:   detail.Project,
 		TaskCount: detail.TaskCount,
 		Tasks:     taskOut.Items,
@@ -144,7 +144,7 @@ func (h *ProjectHandler) Stats(c *gin.Context) {
 		return
 	}
 
-	successResponse(c, http.StatusOK, stats)
+	writeJSON(c, http.StatusOK, stats)
 }
 
 // Update handles PATCH /projects/:id (owner only).
@@ -179,7 +179,7 @@ func (h *ProjectHandler) Update(c *gin.Context) {
 		return
 	}
 
-	successResponse(c, http.StatusOK, p)
+	writeJSON(c, http.StatusOK, p)
 }
 
 // Delete handles DELETE /projects/:id (owner only).

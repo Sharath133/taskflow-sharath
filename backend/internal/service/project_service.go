@@ -79,7 +79,7 @@ func (s *projectService) GetByID(ctx context.Context, userID, projectID uuid.UUI
 	return &ProjectDetail{Project: *p, TaskCount: n}, nil
 }
 
-// ListAccessible returns projects the user owns or has tasks in (assignee or creator).
+// ListAccessible returns projects the user owns or has at least one task in as assignee or creator.
 // When both page and limit are nil, returns all projects (no pagination metadata).
 // When either is set, applies pagination with defaults page=1, limit=20 (max 100).
 func (s *projectService) ListAccessible(ctx context.Context, userID uuid.UUID, page, limit *int) (*ProjectListResult, error) {

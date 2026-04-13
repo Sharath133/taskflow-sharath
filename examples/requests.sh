@@ -7,7 +7,7 @@
 # Usage:
 #   1. Start the stack: docker compose up --build
 #   2. Export BASE_URL (default below) and obtain a JWT:
-#        export TOKEN="$(curl -s -X POST "$BASE_URL/auth/login" ... | jq -r '.data.token')"
+#        export TOKEN="$(curl -s -X POST "$BASE_URL/auth/login" ... | jq -r '.token')"
 #   3. Run individual commands or source this file and copy-paste sections.
 #
 # Test user (after seed migration): test@example.com / password123
@@ -28,7 +28,7 @@ echo
 # -----------------------------------------------------------------------------
 # Auth — Register (no auth)
 # -----------------------------------------------------------------------------
-# Success: 201 + data.token + data.user
+# Success: 201 + top-level token + user
 # Error: 409 if email already exists
 
 curl -sS -X POST "${BASE_URL}/auth/register" \
@@ -54,7 +54,7 @@ echo
 # -----------------------------------------------------------------------------
 # Auth — Login (no auth) — use this to set TOKEN
 # -----------------------------------------------------------------------------
-# Success: 200; copy .data.token into TOKEN
+# Success: 200; copy .token into TOKEN
 
 curl -sS -X POST "${BASE_URL}/auth/login" \
   -H "Content-Type: application/json" \
@@ -67,7 +67,7 @@ echo
 # With jq (if installed):
 # TOKEN="$(curl -sS -X POST "${BASE_URL}/auth/login" \
 #   -H "Content-Type: application/json" \
-#   -d '{"email":"test@example.com","password":"password123"}' | jq -r '.data.token')"
+#   -d '{"email":"test@example.com","password":"password123"}' | jq -r '.token')"
 
 # Invalid credentials — expect 401 {"error":"unauthorized"}
 
@@ -91,12 +91,12 @@ AUTH_HEADER=(-H "Authorization: Bearer ${TOKEN}")
 # Projects
 # -----------------------------------------------------------------------------
 
-# List all accessible projects (no pagination) — 200, data = array
+# List all accessible projects (no pagination) — 200, { "projects": [...] }
 
 curl -sS "${BASE_URL}/projects" "${AUTH_HEADER[@]}"
 echo
 
-# List with pagination — 200, data = { items, total, page, limit }
+# List with pagination — 200, { projects, total, page, limit }
 
 curl -sS "${BASE_URL}/projects?page=1&limit=10" "${AUTH_HEADER[@]}"
 echo

@@ -71,7 +71,7 @@ func TestRegister_ValidationError_InvalidEmail(t *testing.T) {
 	}
 }
 
-// TestRegister_Success_JSONShape verifies successful registration response wraps token and user under data.
+// TestRegister_Success_JSONShape verifies successful registration returns token and user at the top level.
 func TestRegister_Success_JSONShape(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	uid := uuid.MustParse("10000000-0000-4000-8000-000000000099")
@@ -101,20 +101,18 @@ func TestRegister_Success_JSONShape(t *testing.T) {
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected 201, got %d body=%s", w.Code, w.Body.String())
 	}
-	var outer struct {
-		Data struct {
-			Token string               `json:"token"`
-			User  domain.UserResponse `json:"user"`
-		} `json:"data"`
+	var body struct {
+		Token string               `json:"token"`
+		User  domain.UserResponse `json:"user"`
 	}
-	if err := json.Unmarshal(w.Body.Bytes(), &outer); err != nil {
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 		t.Fatal(err)
 	}
-	if outer.Data.Token != "test.jwt.token" {
-		t.Fatalf("unexpected token: %q", outer.Data.Token)
+	if body.Token != "test.jwt.token" {
+		t.Fatalf("unexpected token: %q", body.Token)
 	}
-	if outer.Data.User.Email != "alice@example.com" {
-		t.Fatalf("unexpected user email: %q", outer.Data.User.Email)
+	if body.User.Email != "alice@example.com" {
+		t.Fatalf("unexpected user email: %q", body.User.Email)
 	}
 }
 

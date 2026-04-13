@@ -49,10 +49,10 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      # Live `./migrations` folder — edit SQL locally without rebuilding images.
-      - ./migrations:/migrations:ro
+      # Live `./backend/migrations` — edit SQL locally without rebuilding images.
+      - ./backend/migrations:/migrations:ro
       # Shell wrapper: wait until DB accepts connections, then exec `migrate`.
-      - ./scripts/wait-for-postgres.sh:/scripts/wait-for-postgres.sh:ro
+      - ./backend/scripts/wait-for-postgres.sh:/scripts/wait-for-postgres.sh:ro
     entrypoint: ["/bin/sh", "/scripts/wait-for-postgres.sh"]
     command: ["up"]
     environment:
@@ -64,7 +64,7 @@ services:
   # ---------------------------------------------------------------------------
   api:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     env_file:
       - .env

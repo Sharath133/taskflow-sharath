@@ -80,15 +80,15 @@ func (h *TaskHandler) ListByProject(c *gin.Context) {
 	}
 
 	if out.Paginated {
-		successResponse(c, http.StatusOK, gin.H{
-			"items": out.Items,
+		writeJSON(c, http.StatusOK, gin.H{
+			"tasks": out.Items,
 			"total": out.Total,
 			"page":  out.Page,
 			"limit": out.Limit,
 		})
 		return
 	}
-	successResponse(c, http.StatusOK, out.Items)
+	writeJSON(c, http.StatusOK, gin.H{"tasks": out.Items})
 }
 
 // Create handles POST /projects/:id/tasks.
@@ -124,7 +124,7 @@ func (h *TaskHandler) Create(c *gin.Context) {
 		return
 	}
 
-	successResponse(c, http.StatusCreated, t)
+	writeJSON(c, http.StatusCreated, t)
 }
 
 // Update handles PATCH /tasks/:id.
@@ -159,7 +159,7 @@ func (h *TaskHandler) Update(c *gin.Context) {
 		return
 	}
 
-	successResponse(c, http.StatusOK, t)
+	writeJSON(c, http.StatusOK, t)
 }
 
 // Delete handles DELETE /tasks/:id (204 No Content on success).

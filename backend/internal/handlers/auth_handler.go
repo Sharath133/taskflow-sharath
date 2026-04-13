@@ -38,7 +38,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	successResponse(c, http.StatusCreated, resp)
+	writeJSON(c, http.StatusCreated, resp)
 }
 
 // Login handles POST /auth/login.
@@ -64,7 +64,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	successResponse(c, http.StatusOK, resp)
+	writeJSON(c, http.StatusOK, resp)
 }
 
 func handleRegisterError(c *gin.Context, err error) bool {

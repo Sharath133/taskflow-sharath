@@ -9,9 +9,9 @@ import (
 	"github.com/taskflow/backend/internal/domain"
 )
 
-// successResponse writes JSON: {"data": payload} with the given HTTP status.
-func successResponse(c *gin.Context, status int, payload any) {
-	c.JSON(status, gin.H{"data": payload})
+// writeJSON writes a JSON response with the given status (Appendix A shape — no `data` envelope).
+func writeJSON(c *gin.Context, status int, payload any) {
+	c.JSON(status, payload)
 }
 
 // errorResponse writes JSON: {"error": message, "fields": fields}.

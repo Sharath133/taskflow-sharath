@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "TaskFlow API",
-    "description": "TaskFlow REST API.\n\n**Variables:** `base_url` (e.g. http://localhost:8080), `token` (JWT).\n\nAfter **Login** or **Register (success)**, the collection **Tests** script saves `data.token` into `token` automatically.\n\nSeed data UUIDs (optional hard-coded in some requests): project `20000000-0000-4000-8000-000000000001`, task `30000000-0000-4000-8000-000000000001`. Test user: test@example.com / password123.",
+    "description": "TaskFlow REST API.\n\n**Variables:** `base_url` (e.g. http://localhost:8080), `token` (JWT).\n\nAfter **Login** or **Register (success)**, the collection **Tests** script saves top-level `token` into the `token` variable automatically.\n\nSeed data UUIDs (optional hard-coded in some requests): project `20000000-0000-4000-8000-000000000001`, task `30000000-0000-4000-8000-000000000001`. Test user: test@example.com / password123.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -33,8 +33,8 @@
                 "exec": [
                   "try {",
                   "  const j = pm.response.json();",
-                  "  if (pm.response.code === 201 && j.data && j.data.token) {",
-                  "    pm.collectionVariables.set('token', j.data.token);",
+                  "  if (pm.response.code === 201 && j.token) {",
+                  "    pm.collectionVariables.set('token', j.token);",
                   "  }",
                   "} catch (e) { /* ignore */ }"
                 ],
@@ -88,8 +88,8 @@
                 "exec": [
                   "try {",
                   "  const j = pm.response.json();",
-                  "  if (pm.response.code === 200 && j.data && j.data.token) {",
-                  "    pm.collectionVariables.set('token', j.data.token);",
+                  "  if (pm.response.code === 200 && j.token) {",
+                  "    pm.collectionVariables.set('token', j.token);",
                   "  }",
                   "} catch (e) { /* ignore */ }"
                 ],
@@ -132,7 +132,7 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{base_url}}/projects",
-            "description": "200: data is array when page/limit omitted."
+            "description": "200: { \"projects\": [...] } when page/limit omitted."
           }
         },
         {
@@ -141,7 +141,7 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{base_url}}/projects?page=1&limit=20",
-            "description": "200: data contains items, total, page, limit."
+            "description": "200: { \"projects\", \"total\", \"page\", \"limit\" }."
           }
         },
         {
@@ -241,7 +241,7 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{base_url}}/projects/20000000-0000-4000-8000-000000000001/tasks",
-            "description": "200: data array when not paginated."
+            "description": "200: { \"tasks\": [...] } when not paginated."
           }
         },
         {
@@ -327,7 +327,7 @@
         "method": "GET",
         "header": [],
         "url": "{{base_url}}/health",
-        "description": "200 {\"status\":\"ok\"} — no auth, no data wrapper."
+        "description": "200 {\"status\":\"ok\"} — no auth."
       }
     }
   ]

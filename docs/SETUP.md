@@ -85,7 +85,7 @@ Key variables in `.env` (see `.env.example` for the full list):
 | `GIN_MODE` | `release` or `debug` |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Initialize the Postgres container; must stay consistent with `DATABASE_URL` |
 
-`CORS_ALLOWED_ORIGINS` can be set for browser clients (see `internal/router`); it is optional for local API-only use.
+`CORS_ALLOWED_ORIGINS` can be set for browser clients (see `backend/internal/router`); it is optional for local API-only use.
 
 ---
 
@@ -93,20 +93,20 @@ Key variables in `.env` (see `.env.example` for the full list):
 
 ### Automatic (recommended)
 
-When you run `docker compose up`, the `migrate` service applies all SQL files under `./migrations` after Postgres is ready. You do **not** need a separate migration command for normal development.
+When you run `docker compose up`, the `migrate` service applies all SQL files under `./backend/migrations` after Postgres is ready. You do **not** need a separate migration command for normal development.
 
 ### Manual
 
 If you need to run migrations yourself against a database:
 
 1. Install [golang-migrate](https://github.com/golang-migrate/migrate).
-2. Point `-path` at this repo’s `migrations` folder and `-database` at your `DATABASE_URL`.
+2. Point `-path` at this repo’s `backend/migrations` folder and `-database` at your `DATABASE_URL`.
 
 Example (URL-encode passwords if they contain special characters):
 
 ```bash
-migrate -path ./migrations -database "$DATABASE_URL" up
-migrate -path ./migrations -database "$DATABASE_URL" down 1
+migrate -path ./backend/migrations -database "$DATABASE_URL" up
+migrate -path ./backend/migrations -database "$DATABASE_URL" down 1
 ```
 
 Every migration has matching **up** and **down** SQL.
@@ -184,7 +184,7 @@ Another process is bound to `8080`. Either stop that process or change the host 
 
 ### CORS errors in the browser
 
-- Set `CORS_ALLOWED_ORIGINS` to a comma-separated list of allowed origins, or configure a reverse proxy. Empty origins may default to permissive behavior without credentials; see `internal/router` for details.
+- Set `CORS_ALLOWED_ORIGINS` to a comma-separated list of allowed origins, or configure a reverse proxy. Empty origins may default to permissive behavior without credentials; see `backend/internal/router` for details.
 
 ---
 

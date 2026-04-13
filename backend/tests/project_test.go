@@ -21,11 +21,10 @@ func TestCreateProject_Success(t *testing.T) {
 	}
 	w := makeRequest(t, httpMethodPost, "/projects", toJSONBody(t, reqBody), owner.Token)
 	payload := assertJSON(t, w, httpStatusCreated)
-	data := dataMap(t, payload)
 
-	require.Equal(t, "Integration Project", data["name"])
-	require.Equal(t, owner.ID.String(), data["owner_id"])
-	_, err := uuid.Parse(asString(t, data["id"]))
+	require.Equal(t, "Integration Project", payload["name"])
+	require.Equal(t, owner.ID.String(), payload["owner_id"])
+	_, err := uuid.Parse(asString(t, payload["id"]))
 	require.NoError(t, err)
 }
 
@@ -37,11 +36,11 @@ func TestListProjects_AsOwner(t *testing.T) {
 	createReq := map[string]any{"name": "Listed Project"}
 	wc := makeRequest(t, httpMethodPost, "/projects", toJSONBody(t, createReq), owner.Token)
 	created := assertJSON(t, wc, httpStatusCreated)
-	pid := asString(t, dataMap(t, created)["id"])
+	pid := asString(t, created["id"])
 
 	w := makeRequest(t, httpMethodGet, "/projects", nil, owner.Token)
 	payload := assertJSON(t, w, httpStatusOK)
-	items := dataSlice(t, payload)
+	items := projectsSlice(t, payload)
 	require.GreaterOrEqual(t, len(items), 1)
 
 	found := false
@@ -64,13 +63,12 @@ func TestUpdateProject_AsOwner(t *testing.T) {
 	createReq := map[string]any{"name": "Old Name"}
 	wc := makeRequest(t, httpMethodPost, "/projects", toJSONBody(t, createReq), owner.Token)
 	created := assertJSON(t, wc, httpStatusCreated)
-	pid := asString(t, dataMap(t, created)["id"])
+	pid := asString(t, created["id"])
 
 	patch := map[string]any{"name": "New Name"}
 	w := makeRequest(t, httpMethodPatch, "/projects/"+pid, toJSONBody(t, patch), owner.Token)
 	payload := assertJSON(t, w, httpStatusOK)
-	data := dataMap(t, payload)
-	require.Equal(t, "New Name", data["name"])
+	require.Equal(t, "New Name", payload["name"])
 }
 
 func TestUpdateProject_AsNonOwner(t *testing.T) {
@@ -82,7 +80,7 @@ func TestUpdateProject_AsNonOwner(t *testing.T) {
 	createReq := map[string]any{"name": "Shared Project"}
 	wc := makeRequest(t, httpMethodPost, "/projects", toJSONBody(t, createReq), owner.Token)
 	created := assertJSON(t, wc, httpStatusCreated)
-	pid := asString(t, dataMap(t, created)["id"])
+	pid := asString(t, created["id"])
 
 	taskBody := map[string]any{
 		"title":        "Member task",
@@ -107,7 +105,7 @@ func TestDeleteProject_CascadesTasks(t *testing.T) {
 	createReq := map[string]any{"name": "Cascade Project"}
 	wc := makeRequest(t, httpMethodPost, "/projects", toJSONBody(t, createReq), owner.Token)
 	created := assertJSON(t, wc, httpStatusCreated)
-	pid := asString(t, dataMap(t, created)["id"])
+	pid := asString(t, created["id"])
 	projectUUID, err := uuid.Parse(pid)
 	require.NoError(t, err)
 
@@ -136,24 +134,6 @@ func TestDeleteProject_CascadesTasks(t *testing.T) {
 	err = testDB.Get(&projectCount, `SELECT COUNT(*) FROM projects WHERE id = $1`, projectUUID)
 	require.NoError(t, err)
 	require.Equal(t, 0, projectCount)
-}
-
-func dataMap(t *testing.T, payload map[string]any) map[string]any {
-	t.Helper()
-	raw, ok := payload["data"]
-	require.True(t, ok, "missing data key: %#v", payload)
-	m, ok := raw.(map[string]any)
-	require.True(t, ok, "data should be object, got %T", raw)
-	return m
-}
-
-func dataSlice(t *testing.T, payload map[string]any) []any {
-	t.Helper()
-	raw, ok := payload["data"]
-	require.True(t, ok, "missing data key: %#v", payload)
-	s, ok := raw.([]any)
-	require.True(t, ok, "data should be array, got %T", raw)
-	return s
 }
 
 func asString(t *testing.T, v any) string {
