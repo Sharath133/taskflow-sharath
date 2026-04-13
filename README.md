@@ -27,6 +27,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
+
 - PostgreSQL becomes healthy, **migrations run to completion**, then the API listens on **http://localhost:8080**.
 - Health check: `GET http://localhost:8080/health` → `200`.
 
