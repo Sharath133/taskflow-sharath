@@ -97,12 +97,12 @@ Missing header, wrong scheme, invalid signature, expired token, or malformed JWT
 }
 ```
 
-Other `400` shapes:
+All client input problems use the same envelope: `error` is always `validation failed` and details live in `fields`:
 
-- Invalid JSON body: `{"error":"invalid request body"}` (no `fields`)
-- Invalid path UUID: `{"error":"invalid path parameter","fields":{"id":"must be a valid UUID"}}`
-- Invalid query (tasks list): `{"error":"invalid query parameters"}` or validation-style `fields` for `status` / `assignee`
-- Pagination: `{"error":"validation failed","fields":{"page":"must be a positive integer"}}` (or `limit`)
+- Malformed JSON body: `{"error":"validation failed","fields":{"body":"must be valid JSON"}}`
+- Invalid path UUID (e.g. `:id`): `{"error":"validation failed","fields":{"id":"must be a valid UUID"}}`
+- Invalid query binding (tasks list): `{"error":"validation failed","fields":{"query":"invalid query parameters"}}`
+- Invalid `status` / `assignee` / pagination: `fields` keyed by that parameter (e.g. `page`, `limit`, `status`, `assignee`)
 
 ### Unauthorized (`401`)
 

@@ -193,7 +193,7 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{base_url}}/projects/not-a-uuid",
-            "description": "400 invalid path parameter."
+            "description": "400 validation failed; fields.id = must be a valid UUID."
           }
         },
         {

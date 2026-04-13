@@ -59,7 +59,9 @@ func writeBindError(c *gin.Context, err error) {
 		validationErrorResponse(c, verr)
 		return
 	}
-	errorResponse(c, http.StatusBadRequest, "invalid request body", nil)
+	errorResponse(c, http.StatusBadRequest, domain.ErrValidation.Error(), map[string]string{
+		"body": "must be valid JSON",
+	})
 }
 
 // structToValidationError converts go-playground validator errors to domain.ValidationError (camelCase field names via json tags).

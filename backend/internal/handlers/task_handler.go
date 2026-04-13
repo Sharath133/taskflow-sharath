@@ -40,7 +40,9 @@ func (h *TaskHandler) ListByProject(c *gin.Context) {
 		Assignee string `form:"assignee"`
 	}
 	if err := c.ShouldBindQuery(&q); err != nil {
-		errorResponse(c, http.StatusBadRequest, "invalid query parameters", nil)
+		errorResponse(c, http.StatusBadRequest, domain.ErrValidation.Error(), map[string]string{
+			"query": "invalid query parameters",
+		})
 		return
 	}
 

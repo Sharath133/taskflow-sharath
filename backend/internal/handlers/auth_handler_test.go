@@ -71,6 +71,35 @@ func TestRegister_ValidationError_InvalidEmail(t *testing.T) {
 	}
 }
 
+// TestRegister_InvalidJSONBody_ReturnsValidationEnvelope ensures non-JSON bodies use the standard 400 shape.
+func TestRegister_InvalidJSONBody_ReturnsValidationEnvelope(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewAuthHandler(noopAuthService{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader([]byte(`{"name":`)))
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	h.Register(c)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d body=%s", w.Code, w.Body.String())
+	}
+	var resp struct {
+		Error  string            `json:"error"`
+		Fields map[string]string `json:"fields"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp.Error != "validation failed" {
+		t.Fatalf("expected validation failed, got %q", resp.Error)
+	}
+	if resp.Fields["body"] != "must be valid JSON" {
+		t.Fatalf("expected body field, got %#v", resp.Fields)
+	}
+}
+
 // TestRegister_Success_JSONShape verifies successful registration returns token and user at the top level.
 func TestRegister_Success_JSONShape(t *testing.T) {
 	gin.SetMode(gin.TestMode)

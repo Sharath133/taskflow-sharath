@@ -29,6 +29,8 @@ cp .env.example .env
 docker compose up --build
 ```
 
+Use your **public submission repository URL** and directory name if they differ (assignment naming: `taskflow-<your-name>`).
+
 - PostgreSQL becomes healthy, **migrations run to completion**, then the API listens on **http://localhost:8080** (REST API — there is no separate browser app in this repo).
 - Health check: `GET http://localhost:8080/health` → `200`.
 
@@ -89,7 +91,7 @@ Invoke-RestMethod -Uri "$base/projects" -Headers @{ Authorization = "Bearer $tok
 
 **Errors (examples):**
 
-- Validation: `400` — `{"error":"validation failed","fields":{"email":"is required"}}`
+- Validation (including malformed JSON): `400` — `{"error":"validation failed","fields":{"email":"is required"}}` or `{"body":"must be valid JSON"}`
 - Unauthenticated: `401` — `{"error":"unauthorized"}`
 - Forbidden: `403` — `{"error":"forbidden"}`
 - Not found: `404` — `{"error":"not found"}`
