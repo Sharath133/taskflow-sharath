@@ -138,6 +138,13 @@ func TestLogin_InvalidCredentials_Returns401(t *testing.T) {
 	if w.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401, got %d body=%s", w.Code, w.Body.String())
 	}
+	var resp map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp["error"] != "unauthorized" {
+		t.Fatalf("expected error unauthorized, got %#v", resp["error"])
+	}
 }
 
 // Compile-time check: stubs implement service interfaces.

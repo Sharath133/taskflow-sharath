@@ -118,7 +118,7 @@
               "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"wrong-password\"\n}"
             },
             "url": "{{base_url}}/auth/login",
-            "description": "Expect 401 invalid credentials."
+            "description": "Expect 401 {\"error\":\"unauthorized\"}."
           }
         }
       ]

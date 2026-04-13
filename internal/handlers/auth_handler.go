@@ -56,7 +56,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 			return
 		}
 		if errors.Is(err, domain.ErrUnauthorized) {
-			errorResponse(c, http.StatusUnauthorized, "invalid credentials", nil)
+			errorResponse(c, http.StatusUnauthorized, "unauthorized", nil)
 			return
 		}
 		slog.Error("auth login failed", "error", err)

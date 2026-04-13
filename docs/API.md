@@ -111,7 +111,7 @@ Other `400` shapes:
 ### Unauthorized (`401`)
 
 - Protected route without valid Bearer token: `{"error":"unauthorized"}`
-- Login with wrong credentials: `{"error":"invalid credentials"}`
+- Login with wrong or unknown credentials: `{"error":"unauthorized"}`
 
 ### Forbidden (`403`)
 
@@ -305,7 +305,7 @@ Exchange email and password for a JWT. **No authentication.**
 
 ```json
 {
-  "error": "invalid credentials"
+  "error": "unauthorized"
 }
 ```
 

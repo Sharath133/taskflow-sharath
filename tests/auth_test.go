@@ -72,7 +72,7 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 	}
 	w := makeRequest(t, httpMethodPost, "/auth/login", toJSONBody(t, body), "")
 	payload := assertErrorPayload(t, w, httpStatusUnauthorized)
-	require.Equal(t, "invalid credentials", payload["error"])
+	require.Equal(t, "unauthorized", payload["error"])
 }
 
 func TestLogin_NonexistentUser(t *testing.T) {
@@ -84,7 +84,7 @@ func TestLogin_NonexistentUser(t *testing.T) {
 	}
 	w := makeRequest(t, httpMethodPost, "/auth/login", toJSONBody(t, body), "")
 	payload := assertErrorPayload(t, w, httpStatusUnauthorized)
-	require.Equal(t, "invalid credentials", payload["error"])
+	require.Equal(t, "unauthorized", payload["error"])
 }
 
 func safePrefix(s string, n int) string {

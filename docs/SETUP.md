@@ -171,8 +171,9 @@ Another process is bound to `8080`. Either stop that process or change the host 
 - `BCRYPT_COST` must be at least **12** (validated in config).
 - `JWT_SECRET` must be non-empty for token issuance and validation.
 
-### Login returns `invalid credentials`
+### Login returns `401` with `unauthorized`
 
+- Wrong or unknown email/password responds with `{"error":"unauthorized"}` (same message as missing/invalid JWT) to avoid leaking whether an email exists.
 - Use the seed user `test@example.com` / `password123` after a fresh migrate with seed.
 - Emails are normalized to lowercase; extra spaces are trimmed on register/login.
 

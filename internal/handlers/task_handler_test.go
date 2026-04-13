@@ -142,7 +142,7 @@ func TestCreate_InvalidStatusReturnsFieldError(t *testing.T) {
 	}
 }
 
-func TestDelete_SuccessReturnsMessageAndID(t *testing.T) {
+func TestDelete_SuccessNoContent(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	uid := uuid.MustParse("10000000-0000-4000-8000-000000000001")
 	tid := uuid.MustParse("30000000-0000-4000-8000-000000000003")
@@ -159,23 +159,11 @@ func TestDelete_SuccessReturnsMessageAndID(t *testing.T) {
 
 	h.Delete(c)
 
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d body=%s", w.Code, w.Body.String())
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d body=%s", w.Code, w.Body.String())
 	}
-	var outer struct {
-		Data struct {
-			Message string `json:"message"`
-			ID      string `json:"id"`
-		} `json:"data"`
-	}
-	if err := json.Unmarshal(w.Body.Bytes(), &outer); err != nil {
-		t.Fatal(err)
-	}
-	if outer.Data.ID != tid.String() {
-		t.Fatalf("id: %q", outer.Data.ID)
-	}
-	if !strings.Contains(outer.Data.Message, tid.String()) || !strings.Contains(outer.Data.Message, "deleted") {
-		t.Fatalf("message: %q", outer.Data.Message)
+	if w.Body.Len() != 0 {
+		t.Fatalf("expected empty body, got %q", w.Body.String())
 	}
 }
 

@@ -5,6 +5,7 @@ package tests
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -137,12 +138,8 @@ func TestDeleteTask_AsProjectOwner(t *testing.T) {
 	tid := asString(t, dataMap(t, created)["id"])
 
 	wd := makeRequest(t, httpMethodDelete, "/tasks/"+tid, nil, owner.Token)
-	delPayload := assertJSON(t, wd, httpStatusOK)
-	delData, ok := delPayload["data"].(map[string]any)
-	require.True(t, ok)
-	require.Equal(t, tid, delData["id"])
-	require.Contains(t, asString(t, delData["message"]), tid)
-	require.Contains(t, asString(t, delData["message"]), "deleted")
+	require.Equal(t, httpStatusNoContent, wd.Code)
+	require.Empty(t, strings.TrimSpace(wd.Body.String()))
 
 	var cnt int
 	err := testDB.Get(&cnt, `SELECT COUNT(*) FROM tasks WHERE id = $1`, tid)

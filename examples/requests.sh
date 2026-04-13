@@ -69,7 +69,7 @@ echo
 #   -H "Content-Type: application/json" \
 #   -d '{"email":"test@example.com","password":"password123"}' | jq -r '.data.token')"
 
-# Invalid credentials — expect 401 {"error":"invalid credentials"}
+# Invalid credentials — expect 401 {"error":"unauthorized"}
 
 curl -sS -X POST "${BASE_URL}/auth/login" \
   -H "Content-Type: application/json" \

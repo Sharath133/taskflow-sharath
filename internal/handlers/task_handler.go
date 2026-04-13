@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -163,7 +162,7 @@ func (h *TaskHandler) Update(c *gin.Context) {
 	successResponse(c, http.StatusOK, t)
 }
 
-// Delete handles DELETE /tasks/:id.
+// Delete handles DELETE /tasks/:id (204 No Content on success).
 func (h *TaskHandler) Delete(c *gin.Context) {
 	userID := middleware.GetUserIDFromContext(c)
 	if userID == uuid.Nil {
@@ -185,8 +184,5 @@ func (h *TaskHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	successResponse(c, http.StatusOK, gin.H{
-		"message": fmt.Sprintf("task %s deleted successfully", taskID.String()),
-		"id":      taskID.String(),
-	})
+	c.Status(http.StatusNoContent)
 }
