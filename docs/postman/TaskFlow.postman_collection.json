@@ -1,0 +1,334 @@
+{
+  "info": {
+    "name": "TaskFlow API",
+    "description": "TaskFlow REST API.\n\n**Variables:** `base_url` (e.g. http://localhost:8080), `token` (JWT).\n\nAfter **Login** or **Register (success)**, the collection **Tests** script saves `data.token` into `token` automatically.\n\nSeed data UUIDs (optional hard-coded in some requests): project `20000000-0000-4000-8000-000000000001`, task `30000000-0000-4000-8000-000000000001`. Test user: test@example.com / password123.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Token is populated by the Tests script on \"Login (success)\" and \"Register (success)\".",
+          "// For protected routes, ensure you run one of those first or paste a JWT into the `token` variable."
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "try {",
+                  "  const j = pm.response.json();",
+                  "  if (pm.response.code === 201 && j.data && j.data.token) {",
+                  "    pm.collectionVariables.set('token', j.data.token);",
+                  "  }",
+                  "} catch (e) { /* ignore */ }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Demo User\",\n  \"email\": \"postman-demo@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{base_url}}/auth/register",
+            "description": "201: saves JWT to collection variable `token` via Tests. Change email if you already registered this address (409)."
+          }
+        },
+        {
+          "name": "Register (validation error)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"email\": \"bad\",\n  \"password\": \"short\"\n}"
+            },
+            "url": "{{base_url}}/auth/register",
+            "description": "Expect 400 with validation failed + fields."
+          }
+        },
+        {
+          "name": "Register (conflict — duplicate email)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dup\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{base_url}}/auth/register",
+            "description": "Expect 409 email already registered (seed user exists)."
+          }
+        },
+        {
+          "name": "Login (success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "try {",
+                  "  const j = pm.response.json();",
+                  "  if (pm.response.code === 200 && j.data && j.data.token) {",
+                  "    pm.collectionVariables.set('token', j.data.token);",
+                  "  }",
+                  "} catch (e) { /* ignore */ }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "200: saves JWT to `token` for subsequent requests."
+          }
+        },
+        {
+          "name": "Login (invalid credentials)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"wrong-password\"\n}"
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "Expect 401 invalid credentials."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "List projects",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/projects",
+            "description": "200: data is array when page/limit omitted."
+          }
+        },
+        {
+          "name": "List projects (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/projects?page=1&limit=20",
+            "description": "200: data contains items, total, page, limit."
+          }
+        },
+        {
+          "name": "List projects (bad pagination)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/projects?page=0&limit=10",
+            "description": "Expect 400 validation failed on page."
+          }
+        },
+        {
+          "name": "List projects (no token — 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/projects",
+            "description": "Expect 401 unauthorized."
+          }
+        },
+        {
+          "name": "Create project",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My project\",\n  \"description\": \"Optional description\"\n}"
+            },
+            "url": "{{base_url}}/projects",
+            "description": "201 Created."
+          }
+        },
+        {
+          "name": "Get project + tasks (seed)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/projects/20000000-0000-4000-8000-000000000001",
+            "description": "200: project, tasks[], task_count."
+          }
+        },
+        {
+          "name": "Get project (invalid UUID)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/projects/not-a-uuid",
+            "description": "400 invalid path parameter."
+          }
+        },
+        {
+          "name": "Project stats (seed)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/projects/20000000-0000-4000-8000-000000000001/stats",
+            "description": "200: by_status, by_assignee (__unassigned__ when no assignee)."
+          }
+        },
+        {
+          "name": "Update project (seed)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo Project (updated)\"\n}"
+            },
+            "url": "{{base_url}}/projects/20000000-0000-4000-8000-000000000001",
+            "description": "200: owner only."
+          }
+        },
+        {
+          "name": "Delete project (destructive)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/projects/20000000-0000-4000-8000-000000000001",
+            "description": "204 No Content — removes project and tasks. Skip if you want to keep seed data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "List tasks (seed project)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/projects/20000000-0000-4000-8000-000000000001/tasks",
+            "description": "200: data array when not paginated."
+          }
+        },
+        {
+          "name": "List tasks (filters + pagination)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/projects/20000000-0000-4000-8000-000000000001/tasks?status=todo&page=1&limit=10",
+            "description": "200: paginated envelope when page/limit used."
+          }
+        },
+        {
+          "name": "List tasks (invalid status)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/projects/20000000-0000-4000-8000-000000000001/tasks?status=invalid",
+            "description": "400 validation failed on status."
+          }
+        },
+        {
+          "name": "Create task",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New task\",\n  \"description\": \"Optional\",\n  \"status\": \"todo\",\n  \"priority\": \"medium\"\n}"
+            },
+            "url": "{{base_url}}/projects/20000000-0000-4000-8000-000000000001/tasks",
+            "description": "201: project_id taken from URL; defaults status=todo, priority=medium."
+          }
+        },
+        {
+          "name": "Update task (seed)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"priority\": \"high\"\n}"
+            },
+            "url": "{{base_url}}/tasks/30000000-0000-4000-8000-000000000001",
+            "description": "200: PATCH seed todo task."
+          }
+        },
+        {
+          "name": "Update task (empty body — error)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{base_url}}/tasks/30000000-0000-4000-8000-000000000002",
+            "description": "400: at least one field must be provided."
+          }
+        },
+        {
+          "name": "Delete task (destructive)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/tasks/30000000-0000-4000-8000-000000000003",
+            "description": "204 No Content — optional; removes seed done task."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/health",
+        "description": "200 {\"status\":\"ok\"} — no auth, no data wrapper."
+      }
+    }
+  ]
+}

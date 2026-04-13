@@ -1,0 +1,8 @@
+/bin/
+/dist/
+.env
+.env.host
+*.exe
+*.test
+/vendor/
+node_modules/

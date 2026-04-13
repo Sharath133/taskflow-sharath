@@ -1,0 +1,81 @@
+# =============================================================================
+# TaskFlow local / demo stack: PostgreSQL → migrations → API
+# =============================================================================
+# Prerequisites: copy `.env.example` to `.env` once (`cp .env.example .env`).
+# Then: `docker compose up --build` — Postgres becomes healthy, migrate runs
+# to completion, then the API starts on http://localhost:8080
+# (GET /health → 200).
+
+name: taskflow
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 15 — persistent data + health gate for migrate and API
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    env_file:
+      - .env
+    environment:
+      # Explicit mapping documents required keys; values come from `.env`.
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      # Named volume survives `docker compose down` (without -v).
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Expose Postgres to the host (DBeaver, psql, or `go run` with localhost DATABASE_URL).
+      - "5432:5432"
+    healthcheck:
+      # Wait until the server accepts connections before dependent services run.
+      # Uses the same user/database as `.env.example`; keep in sync if you rename them.
+      test: ["CMD-SHELL", "pg_isready -U taskflow -d taskflow || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # golang-migrate — one-shot `up` after Postgres is healthy
+  # ---------------------------------------------------------------------------
+  migrate:
+    image: migrate/migrate:v4.18.1
+    # Do not restart on success; only retry real failures if you change policy.
+    restart: "no"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # Live `./migrations` folder — edit SQL locally without rebuilding images.
+      - ./migrations:/migrations:ro
+      # Shell wrapper: wait until DB accepts connections, then exec `migrate`.
+      - ./scripts/wait-for-postgres.sh:/scripts/wait-for-postgres.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/wait-for-postgres.sh"]
+    command: ["up"]
+    environment:
+      # Used by wait script + migrate CLI (host `postgres` = service name).
+      DATABASE_URL: ${DATABASE_URL}
+
+  # ---------------------------------------------------------------------------
+  # TaskFlow HTTP API — starts only after migrations finished successfully
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

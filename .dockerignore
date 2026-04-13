@@ -1,0 +1,29 @@
+# Secrets and local overrides — never bake into images
+.env
+
+# VCS metadata
+.git
+.gitignore
+
+# Documentation (not needed to compile the binary)
+*.md
+
+# Ephemeral / cache directories
+tmp/
+
+# Go vendor tree (project uses modules; vendor is optional and often huge)
+vendor/
+
+# Docker artifacts (avoid recursive context bloat)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# IDE / OS noise
+.idea
+.vscode
+*.swp
+*~
+
+# Node tooling (unrelated to Go API image)
+tools/hash-gen/node_modules
